@@ -18,6 +18,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
   const [showImportArea, setShowImportArea] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const dbImportRef = useRef<HTMLInputElement>(null);
   
   // Reports specific state
   const [selectedClass, setSelectedClass] = useState<string>(state.students[0]?.class || 'XII MIPA 1');
@@ -31,7 +32,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
     kkm: 75,
     duration: 60,
     questions: [],
-    targetClasses: ['XII MIPA 1']
+    targetClasses: []
   });
   const [aiMaterial, setAiMaterial] = useState('');
   const [aiQuestionCount, setAiQuestionCount] = useState(5);
@@ -67,6 +68,38 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
     }
     setCsvInput('');
     setShowImportArea(false);
+  };
+
+  const exportDatabase = () => {
+    const dataStr = JSON.stringify(state, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `smada_genius_backup_${new Date().toISOString().slice(0,10)}.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleImportDatabase = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const importedState = JSON.parse(event.target?.result as string);
+        if (importedState.students && importedState.exams) {
+          onUpdate(importedState);
+          alert("Database berhasil dipulihkan!");
+        } else {
+          alert("Format file backup tidak valid.");
+        }
+      } catch (err) {
+        alert("Gagal membaca file backup.");
+      }
+    };
+    reader.readAsText(file);
+    if (dbImportRef.current) dbImportRef.current.value = '';
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,8 +164,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
       subject: exam.subject,
       kkm: exam.kkm || 75,
       duration: exam.duration,
-      questions: JSON.parse(JSON.stringify(exam.questions)), // Deep copy to avoid mutating state directly
-      targetClasses: [...(exam.targetClasses || ['XII MIPA 1'])]
+      questions: JSON.parse(JSON.stringify(exam.questions)),
+      targetClasses: [...(exam.targetClasses || [])]
     });
     setShowCreateModal(true);
   };
@@ -166,7 +199,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
     }
 
     setShowCreateModal(false);
-    setNewExam({ title: '', subject: '', kkm: 75, duration: 60, questions: [], targetClasses: ['XII MIPA 1'] });
+    setNewExam({ title: '', subject: '', kkm: 75, duration: 60, questions: [], targetClasses: [] });
     setAiMaterial('');
     setAiQuestionCount(5);
     setAiImage(null);
@@ -292,6 +325,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
     <div className="flex flex-col gap-6 animate-in fade-in duration-700">
       <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".csv" className="hidden" />
       <input type="file" ref={imageInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
+      <input type="file" ref={dbImportRef} onChange={handleImportDatabase} accept=".json" className="hidden" />
       
       <nav className="flex justify-center mb-4 no-print">
         <div className="bg-[#f1f3f9] p-2 rounded-2xl flex gap-1 shadow-inner">
@@ -310,10 +344,10 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
             {activeTab === 'assignments' && 'MANAJEMEN TUGAS'}
             {activeTab === 'students' && 'DATABASE SISWA'}
             {activeTab === 'reports' && `MANAJEMEN RAPORT`}
-            {activeTab === 'settings' && 'PENGATURAN RAPORT'}
+            {activeTab === 'settings' && 'PUSAT DATA & PENGATURAN'}
           </h2>
           {activeTab === 'exams' && (
-            <button onClick={() => { setEditingExamId(null); setNewExam({ title: '', subject: '', kkm: 75, duration: 60, questions: [], targetClasses: ['XII MIPA 1'] }); setShowCreateModal(true); }} className="bg-[#5b59e5] text-white px-8 py-3.5 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#4a48c4] transition-all shadow-lg shadow-indigo-100"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>BUAT UJIAN BARU</button>
+            <button onClick={() => { setEditingExamId(null); setNewExam({ title: '', subject: '', kkm: 75, duration: 60, questions: [], targetClasses: [] }); setShowCreateModal(true); }} className="bg-[#5b59e5] text-white px-8 py-3.5 rounded-2xl font-black text-sm flex items-center gap-2 hover:bg-[#4a48c4] transition-all shadow-lg shadow-indigo-100"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>BUAT UJIAN BARU</button>
           )}
           {activeTab === 'students' && (
             <div className="flex items-center gap-3">
@@ -487,6 +521,50 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
 
           {activeTab === 'settings' && (
              <div className="p-12 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl space-y-12">
+               {/* SINKRONISASI & CADANGAN */}
+               <section className="bg-indigo-50/50 border border-indigo-100 p-10 rounded-[2.5rem] shadow-sm">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-12 h-12 bg-[#5b59e5] text-white rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-100">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-[#1e293b] uppercase tracking-tight">Pusat Sinkronisasi Data</h3>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cegah data hilang saat keluar dari Incognito</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white p-8 rounded-3xl border border-indigo-100 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Pencadangan Lokal</h4>
+                        <p className="text-xs text-slate-500 font-medium mb-6">Unduh file database (.json) untuk disimpan di perangkat Anda.</p>
+                      </div>
+                      <button onClick={exportDatabase} className="w-full bg-[#5b59e5] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        EKSPOR DATABASE
+                      </button>
+                    </div>
+                    
+                    <div className="bg-white p-8 rounded-3xl border border-indigo-100 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Pemulihan Data</h4>
+                        <p className="text-xs text-slate-500 font-medium mb-6">Unggah kembali file cadangan jika data terhapus secara tidak sengaja.</p>
+                      </div>
+                      <button onClick={() => dbImportRef.current?.click()} className="w-full border-2 border-[#5b59e5] text-[#5b59e5] py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition-all active:scale-95 flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        IMPOR DATABASE
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="mt-8 p-6 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-4">
+                     <svg className="w-6 h-6 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                     <p className="text-[10px] font-bold text-amber-700 uppercase tracking-tight leading-relaxed">
+                       Saran Senior Engineer: Gunakan mode Incognito hanya untuk pengujian. Untuk penggunaan harian, gunakan browser normal agar sistem sinkronisasi otomatis ke LocalStorage berfungsi maksimal tanpa perlu ekspor/impor manual.
+                     </p>
+                  </div>
+               </section>
+
                <section className="bg-white border border-slate-100 p-10 rounded-[2.5rem] shadow-sm">
                   <h3 className="text-xl font-black text-[#1e293b] uppercase tracking-tight mb-8">Identitas Sekolah</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

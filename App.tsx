@@ -49,7 +49,14 @@ const App: React.FC = () => {
   };
 
   const updateState = (newState: Partial<AppState>) => {
-    setState(prev => ({ ...prev, ...newState }));
+    setState(prev => {
+      // Jika yang dikirim adalah full state (dari fitur Impor JSON)
+      if (newState.students && newState.exams && newState.reportSettings) {
+        return { ...newState } as AppState;
+      }
+      // Jika update parsial biasa
+      return { ...prev, ...newState };
+    });
   };
 
   const handleLogout = () => {
