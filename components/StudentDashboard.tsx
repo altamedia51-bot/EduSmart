@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { AppState, Exam, ExamResult } from '../types.ts';
+import { AppState, Exam, ExamResult, Submission } from '../types.ts';
 import { ExamModule } from './ExamModule.tsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -13,11 +13,17 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
   const [activeExam, setActiveExam] = useState<Exam | null>(null);
   const [activeMainTab, setActiveMainTab] = useState<'beranda' | 'statistik'>('beranda');
   const [leaderboardTab, setLeaderboardTab] = useState<'sekolah' | 'kelas' | 'top'>('sekolah');
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
+  
+  // State for assignment submission form
+  const [subject, setSubject] = useState('');
+  const [description, setDescription] = useState('');
 
   // Mendapatkan data siswa yang sedang login (demo)
   const currentStudent = state.students.find(s => s.id === 'demo-student') || state.students[0];
   const studentResults = state.results.filter(r => r.studentId === currentStudent.id);
   const activeExams = state.exams.filter(e => e.active);
+  const studentSubmissions = state.submissions.filter(s => s.studentId === currentStudent.id);
 
   const handleStartExam = (exam: Exam) => {
     document.documentElement.requestFullscreen().catch((err) => {
@@ -31,12 +37,34 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
     setActiveExam(null);
   };
 
+  const handleSubmitAssignment = () => {
+    if (!subject) {
+      alert("Silakan isi mata pelajaran.");
+      return;
+    }
+    
+    const newSubmission: Submission = {
+      id: Math.random().toString(36).substr(2, 9),
+      studentId: currentStudent.id,
+      subject,
+      description,
+      timestamp: Date.now(),
+      status: 'PENDING'
+    };
+
+    onUpdate({ submissions: [newSubmission, ...state.submissions] });
+    alert(`Tugas ${subject} berhasil dikirim!`);
+    setShowSubmitModal(false);
+    setSubject('');
+    setDescription('');
+  };
+
   if (activeExam) {
     return <ExamModule exam={activeExam} studentId={currentStudent.id} onFinish={handleFinishExam} onCancel={() => setActiveExam(null)} />;
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-20 relative">
       {/* Top Navigation Tabs */}
       <div className="flex justify-start mb-6 no-print">
         <div className="bg-slate-100/80 p-1.5 rounded-2xl flex gap-1 shadow-sm">
@@ -65,7 +93,10 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
               <h1 className="text-5xl font-black tracking-tight uppercase">HALO, {currentStudent.name.split(' ')[0]}! 👋</h1>
               <p className="text-indigo-100 font-black text-xs uppercase tracking-[0.2em] opacity-80">KELAS: {currentStudent.class}</p>
             </div>
-            <button className="bg-white text-[#5b59e5] px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-transform shadow-xl">
+            <button 
+              onClick={() => setShowSubmitModal(true)}
+              className="bg-white text-[#5b59e5] px-10 py-5 rounded-[2rem] font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:scale-105 transition-transform shadow-xl"
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
               KIRIM TUGAS
             </button>
@@ -117,8 +148,24 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
                     <svg className="w-5 h-5 text-[#5b59e5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <h2 className="text-sm font-black text-slate-800 tracking-widest uppercase">NILAI TERAKHIR</h2>
                   </div>
-                  <div className="bg-white rounded-[3rem] border border-slate-50 p-10 min-h-[250px] flex flex-col items-center justify-center text-center shadow-xl shadow-slate-100">
-                    <p className="text-slate-200 font-black text-[10px] uppercase tracking-[0.2em] italic">DATA KOSONG.</p>
+                  <div className="bg-white rounded-[3rem] border border-slate-50 p-8 min-h-[250px] shadow-xl shadow-slate-100">
+                    {studentResults.length > 0 ? (
+                      <div className="space-y-4">
+                         {studentResults.slice(0, 3).map((res, i) => (
+                            <div key={i} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
+                               <div>
+                                  <p className="font-black text-slate-800 text-[10px] uppercase">{state.exams.find(e => e.id === res.examId)?.title || 'Ujian Digital'}</p>
+                                  <p className="text-[8px] text-slate-400 font-bold">{new Date(res.timestamp).toLocaleDateString()}</p>
+                               </div>
+                               <span className="text-xl font-black text-indigo-600">{res.score.toFixed(0)}</span>
+                            </div>
+                         ))}
+                      </div>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center">
+                        <p className="text-slate-200 font-black text-[10px] uppercase tracking-[0.2em] italic">DATA KOSONG.</p>
+                      </div>
+                    )}
                   </div>
                 </section>
 
@@ -127,8 +174,26 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
                     <svg className="w-5 h-5 text-[#5b59e5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                     <h2 className="text-sm font-black text-slate-800 tracking-widest uppercase">STATUS TUGAS</h2>
                   </div>
-                  <div className="bg-white rounded-[3rem] border border-slate-50 p-10 min-h-[250px] flex flex-col items-center justify-center text-center shadow-xl shadow-slate-100">
-                    <p className="text-slate-200 font-black text-[10px] uppercase tracking-[0.2em] italic">DATA KOSONG.</p>
+                  <div className="bg-white rounded-[3rem] border border-slate-50 p-8 min-h-[250px] shadow-xl shadow-slate-100">
+                    {studentSubmissions.length > 0 ? (
+                      <div className="space-y-4">
+                         {studentSubmissions.slice(0, 3).map((sub, i) => (
+                            <div key={i} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
+                               <div>
+                                  <p className="font-black text-slate-800 text-[10px] uppercase">{sub.subject}</p>
+                                  <p className="text-[8px] text-slate-400 font-bold">{new Date(sub.timestamp).toLocaleDateString()}</p>
+                               </div>
+                               <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase ${sub.status === 'GRADED' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}>
+                                 {sub.status === 'GRADED' ? `NILAI: ${sub.score}` : 'MENUNGGU'}
+                               </span>
+                            </div>
+                         ))}
+                      </div>
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center">
+                        <p className="text-slate-200 font-black text-[10px] uppercase tracking-[0.2em] italic">DATA KOSONG.</p>
+                      </div>
+                    )}
                   </div>
                 </section>
               </div>
@@ -211,6 +276,73 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      )}
+
+      {/* Submit Tugas Mandiri Modal */}
+      {showSubmitModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 p-4">
+           <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-center bg-white">
+                 <h2 className="text-xl font-black text-[#1e293b] uppercase tracking-tight">SUBMIT TUGAS MANDIRI</h2>
+                 <button 
+                  onClick={() => setShowSubmitModal(false)}
+                  className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors"
+                 >
+                   <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                 </button>
+              </div>
+
+              <div className="p-10 space-y-8">
+                 {/* Mata Pelajaran Input */}
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.15em] ml-2">MATA PELAJARAN</label>
+                    <div className="bg-[#f8fafc] border border-slate-100 rounded-[1.5rem] p-1.5 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
+                       <input 
+                         type="text" 
+                         value={subject}
+                         onChange={(e) => setSubject(e.target.value)}
+                         placeholder="Mis: Sejarah..."
+                         className="w-full bg-transparent border-none px-6 py-4 text-base font-bold text-[#334155] outline-none placeholder:text-slate-300"
+                       />
+                    </div>
+                 </div>
+
+                 {/* Deskripsi Tugas Textarea */}
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.15em] ml-2">DESKRIPSI TUGAS</label>
+                    <div className="bg-[#f8fafc] border border-slate-100 rounded-[1.5rem] p-1.5 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
+                       <textarea 
+                         rows={4}
+                         value={description}
+                         onChange={(e) => setDescription(e.target.value)}
+                         placeholder="Tulis catatan..."
+                         className="w-full bg-transparent border-none px-6 py-4 text-base font-bold text-[#334155] outline-none resize-none placeholder:text-slate-300"
+                       />
+                    </div>
+                 </div>
+
+                 {/* Attachment Area */}
+                 <div className="space-y-4">
+                    <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.15em] ml-2">LAMPIRAN FOTO/FILE</label>
+                    <div className="border-2 border-dashed border-slate-200 rounded-[1.5rem] py-10 flex flex-col items-center justify-center group hover:bg-slate-50/50 hover:border-indigo-300 transition-all cursor-pointer">
+                       <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-all">
+                          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                       </div>
+                       <p className="text-[10px] font-black text-[#94a3b8] uppercase tracking-widest group-hover:text-indigo-500">PILIH LAMPIRAN</p>
+                    </div>
+                 </div>
+
+                 {/* Submit Button */}
+                 <button 
+                  onClick={handleSubmitAssignment}
+                  className="w-full bg-[#5b59e5] text-white py-6 rounded-[1.5rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 active:scale-95"
+                 >
+                   KIRIM TUGAS
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+                 </button>
+              </div>
+           </div>
         </div>
       )}
     </div>

@@ -26,6 +26,7 @@ const INITIAL_STATE: AppState = {
   assignments: [
     { id: 'a1', title: 'Biology Lab Report', description: 'Due by Friday', deadline: 'May 20, 2024' }
   ],
+  submissions: [],
   reportSettings: {
     schoolName: 'SMADA GENIUS ACADEMY',
     period: 'Semester Ganjil 2024',
@@ -116,7 +117,13 @@ const App: React.FC = () => {
       {/* Hidden Print Generator */}
       {currentRole === UserRole.TEACHER && state.students.length > 0 && (
           <div className="print-only">
-             <ReportGenerator student={state.students[0]} settings={state.reportSettings} />
+             <ReportGenerator 
+               student={state.students[0]} 
+               settings={state.reportSettings} 
+               results={state.results}
+               submissions={state.submissions}
+               exams={state.exams}
+             />
           </div>
       )}
     </div>

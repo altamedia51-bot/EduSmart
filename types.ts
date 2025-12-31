@@ -53,11 +53,22 @@ export interface Assignment {
   deadline: string;
 }
 
+export interface Submission {
+  id: string;
+  studentId: string;
+  subject: string;
+  description: string;
+  timestamp: number;
+  score?: number;
+  status: 'PENDING' | 'GRADED';
+}
+
 export interface AppState {
   userRole: UserRole;
   students: Student[];
   exams: Exam[];
   results: ExamResult[];
   assignments: Assignment[];
+  submissions: Submission[];
   reportSettings: ReportSettings;
 }
