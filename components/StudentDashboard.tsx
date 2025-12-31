@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AppState, Exam, ExamResult, Submission } from '../types.ts';
 import { ExamModule } from './ExamModule.tsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -18,6 +18,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
   // State for assignment submission form
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Get current student based on localStorage set in App.tsx
   const loggedStudentId = localStorage.getItem('edu_smart_student_id');
@@ -39,6 +41,16 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
     setActiveExam(null);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleSubmitAssignment = () => {
     if (!subject) {
       alert("Silakan isi mata pelajaran.");
@@ -51,7 +63,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
       subject,
       description,
       timestamp: Date.now(),
-      status: 'PENDING'
+      status: 'PENDING',
+      attachmentName: selectedFile ? selectedFile.name : undefined
     };
 
     onUpdate({ submissions: [newSubmission, ...state.submissions] });
@@ -59,6 +72,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
     setShowSubmitModal(false);
     setSubject('');
     setDescription('');
+    setSelectedFile(null);
   };
 
   if (activeExam) {
@@ -304,6 +318,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
               </div>
 
               <div className="p-10 space-y-8">
+                 <input 
+                   type="file" 
+                   ref={fileInputRef} 
+                   onChange={handleFileChange} 
+                   className="hidden" 
+                 />
+                 
                  <div className="space-y-4">
                     <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.15em] ml-2">MATA PELAJARAN</label>
                     <div className="bg-[#f8fafc] border border-slate-100 rounded-[1.5rem] p-1.5 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all shadow-inner">
@@ -332,11 +353,24 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
 
                  <div className="space-y-4">
                     <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.15em] ml-2">UPLOAD LAMPIRAN</label>
-                    <div className="border-2 border-dashed border-slate-200 rounded-[1.5rem] py-10 flex flex-col items-center justify-center group hover:bg-slate-50/50 hover:border-indigo-300 transition-all cursor-pointer">
-                       <div className="w-12 h-12 bg-slate-100 text-slate-400 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-all shadow-sm">
+                    <div 
+                      onClick={triggerFileUpload}
+                      className={`border-2 border-dashed rounded-[1.5rem] py-10 flex flex-col items-center justify-center group transition-all cursor-pointer ${selectedFile ? 'bg-indigo-50 border-indigo-400' : 'border-slate-200 hover:bg-slate-50/50 hover:border-indigo-300'}`}
+                    >
+                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all shadow-sm ${selectedFile ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-50 group-hover:text-indigo-500'}`}>
                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                        </div>
-                       <p className="text-[10px] font-black text-[#94a3b8] uppercase tracking-widest group-hover:text-indigo-500 transition-colors">KLIK UNTUK UNGGAH FILE</p>
+                       <p className={`text-[10px] font-black uppercase tracking-widest transition-colors ${selectedFile ? 'text-indigo-600' : 'text-[#94a3b8] group-hover:text-indigo-500'}`}>
+                         {selectedFile ? selectedFile.name : 'KLIK UNTUK UNGGAH FILE'}
+                       </p>
+                       {selectedFile && (
+                         <button 
+                           onClick={(e) => { e.stopPropagation(); setSelectedFile(null); }}
+                           className="mt-4 text-[9px] font-black text-red-500 hover:text-red-700 uppercase tracking-widest underline"
+                         >
+                           Hapus File
+                         </button>
+                       )}
                     </div>
                  </div>
 

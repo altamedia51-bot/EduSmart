@@ -61,6 +61,7 @@ export interface Submission {
   timestamp: number;
   score?: number;
   status: 'PENDING' | 'GRADED';
+  attachmentName?: string;
 }
 
 export interface AppState {
