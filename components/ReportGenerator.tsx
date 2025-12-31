@@ -1,13 +1,14 @@
 
 import React, { useState } from 'react';
-import { Student } from '../types.ts';
+import { Student, ReportSettings } from '../types.ts';
 import { generateReportComment } from '../services/geminiService.ts';
 
 interface ReportGeneratorProps {
   student: Student;
+  settings: ReportSettings;
 }
 
-export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student }) => {
+export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student, settings }) => {
   const [comment, setComment] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
@@ -34,7 +35,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student }) => 
     <div className="max-w-5xl mx-auto bg-white p-12 print:p-0 shadow-2xl rounded-[2.5rem] print:shadow-none print:rounded-none">
       {/* Header Section */}
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-[900] text-[#1e293b] tracking-[0.15em] mb-1">SMADA GENIUS ACADEMY</h1>
+        <h1 className="text-4xl font-[900] text-[#1e293b] tracking-[0.15em] mb-1">{settings.schoolName}</h1>
         <p className="text-[#94a3b8] font-bold text-xs tracking-[0.2em] uppercase mb-6">Sistem Evaluasi Digital Terintegrasi</p>
         <div className="border-t-[1px] border-black mb-1"></div>
         <div className="border-t-[3px] border-black"></div>
@@ -56,7 +57,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student }) => 
           <div className="grid grid-cols-[120px_10px_1fr] items-center">
             <span>PERIODE</span>
             <span>:</span>
-            <span className="text-[#1e293b] font-black">Semester Ganjil 2024</span>
+            <span className="text-[#1e293b] font-black">{settings.period}</span>
           </div>
         </div>
 
@@ -81,7 +82,6 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student }) => 
             </tr>
           </thead>
           <tbody className="text-[#475569] font-bold text-[11px] uppercase tracking-wider">
-            {/* Added explicit cast to scoreValue to fix unknown type comparison error */}
             {Object.entries(student.grades).map(([subject, scoreValue], idx) => {
               const score = scoreValue as number;
               return (
@@ -146,7 +146,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student }) => 
         </div>
 
         <div className="text-center">
-          <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest mb-16">Jakarta, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}<br/>Kepala Sekolah</p>
+          <p className="text-[10px] font-bold text-[#94a3b8] uppercase tracking-widest mb-16">{settings.city}, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}<br/>{settings.signatoryTitle}</p>
           <div className="w-48 border-b border-slate-300 mx-auto"></div>
           <p className="text-[10px] font-black text-[#1e293b] mt-2 uppercase tracking-widest">Drs. EDU SMART, M.Pd</p>
         </div>

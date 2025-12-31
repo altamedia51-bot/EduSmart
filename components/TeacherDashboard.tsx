@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { Student, Exam, AppState, Question } from '../types.ts';
+import { Student, Exam, AppState, Question, ReportSettings } from '../types.ts';
 import { generateQuestions } from '../services/geminiService.ts';
 import { ReportGenerator } from './ReportGenerator.tsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -183,6 +183,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
     document.body.removeChild(a);
   };
 
+  const updateReportSettings = (field: keyof ReportSettings, value: string) => {
+    onUpdate({
+      reportSettings: {
+        ...state.reportSettings,
+        [field]: value
+      }
+    });
+  };
+
   const classes = Array.from(new Set(state.students.map(s => s.class))).sort();
   const studentsInClass = state.students.filter(s => s.class === selectedClass);
 
@@ -292,13 +301,72 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
 
         {reportSubTab === 'raport' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-             <ReportGenerator student={viewingReportStudent} />
+             <ReportGenerator student={viewingReportStudent} settings={state.reportSettings} />
           </div>
         )}
 
         {reportSubTab === 'pengaturan' && (
-          <div className="bg-white rounded-[3rem] p-12 shadow-xl shadow-slate-100 text-center py-24 text-slate-300 font-bold uppercase tracking-widest text-xs italic">
-            Menu pengaturan siswa sedang dikembangkan
+          <div className="bg-white rounded-[3rem] p-12 shadow-xl shadow-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex items-center gap-4 mb-10">
+              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-sm">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+              </div>
+              <h2 className="text-2xl font-black text-[#1e293b] uppercase tracking-tight">Profil Sekolah & Raport</h2>
+            </div>
+
+            <div className="grid grid-cols-1 gap-10 max-w-4xl">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-4">Nama Sekolah</label>
+                <div className="bg-[#f8fafc] border border-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                  <input 
+                    type="text" 
+                    value={state.reportSettings.schoolName}
+                    onChange={(e) => updateReportSettings('schoolName', e.target.value)}
+                    className="w-full bg-transparent border-none px-8 py-4 text-xl font-black text-[#334155] outline-none"
+                    placeholder="Masukkan nama sekolah..."
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-4">Periode Raport</label>
+                <div className="bg-[#f8fafc] border border-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                  <input 
+                    type="text" 
+                    value={state.reportSettings.period}
+                    onChange={(e) => updateReportSettings('period', e.target.value)}
+                    className="w-full bg-transparent border-none px-8 py-4 text-xl font-black text-[#334155] outline-none"
+                    placeholder="Contoh: Semester Ganjil 2024"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-4">Kota Penerbitan</label>
+                <div className="bg-[#f8fafc] border border-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                  <input 
+                    type="text" 
+                    value={state.reportSettings.city}
+                    onChange={(e) => updateReportSettings('city', e.target.value)}
+                    className="w-full bg-transparent border-none px-8 py-4 text-xl font-black text-[#334155] outline-none"
+                    placeholder="Contoh: Semarang"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-4">Jabatan Penanda Tangan</label>
+                <div className="bg-[#f8fafc] border border-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                  <input 
+                    type="text" 
+                    value={state.reportSettings.signatoryTitle}
+                    onChange={(e) => updateReportSettings('signatoryTitle', e.target.value)}
+                    className="w-full bg-transparent border-none px-8 py-4 text-xl font-black text-[#334155] outline-none"
+                    placeholder="Contoh: Wali Kelas"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -458,7 +526,72 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
             </div>
           )}
 
-          {['assignments', 'settings'].includes(activeTab) && <div className="py-24 text-center text-slate-300 font-bold uppercase tracking-widest text-xs italic">Menu {activeTab} sedang dalam pengembangan</div>}
+          {activeTab === 'settings' && (
+             <div className="bg-white rounded-[3rem] p-12 shadow-xl shadow-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <div className="flex items-center gap-4 mb-10">
+               <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shadow-sm">
+                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+               </div>
+               <h2 className="text-2xl font-black text-[#1e293b] uppercase tracking-tight">Profil Sekolah & Raport Global</h2>
+             </div>
+ 
+             <div className="grid grid-cols-1 gap-10 max-w-4xl">
+               <div className="space-y-4">
+                 <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-4">Nama Sekolah</label>
+                 <div className="bg-[#f8fafc] border border-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                   <input 
+                     type="text" 
+                     value={state.reportSettings.schoolName}
+                     onChange={(e) => updateReportSettings('schoolName', e.target.value)}
+                     className="w-full bg-transparent border-none px-8 py-4 text-xl font-black text-[#334155] outline-none"
+                     placeholder="Masukkan nama sekolah..."
+                   />
+                 </div>
+               </div>
+ 
+               <div className="space-y-4">
+                 <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-4">Periode Raport</label>
+                 <div className="bg-[#f8fafc] border border-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                   <input 
+                     type="text" 
+                     value={state.reportSettings.period}
+                     onChange={(e) => updateReportSettings('period', e.target.value)}
+                     className="w-full bg-transparent border-none px-8 py-4 text-xl font-black text-[#334155] outline-none"
+                     placeholder="Contoh: Semester Ganjil 2024"
+                   />
+                 </div>
+               </div>
+ 
+               <div className="space-y-4">
+                 <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-4">Kota Penerbitan</label>
+                 <div className="bg-[#f8fafc] border border-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                   <input 
+                     type="text" 
+                     value={state.reportSettings.city}
+                     onChange={(e) => updateReportSettings('city', e.target.value)}
+                     className="w-full bg-transparent border-none px-8 py-4 text-xl font-black text-[#334155] outline-none"
+                     placeholder="Contoh: Semarang"
+                   />
+                 </div>
+               </div>
+ 
+               <div className="space-y-4">
+                 <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-4">Jabatan Penanda Tangan</label>
+                 <div className="bg-[#f8fafc] border border-slate-100 rounded-[2rem] p-2 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all">
+                   <input 
+                     type="text" 
+                     value={state.reportSettings.signatoryTitle}
+                     onChange={(e) => updateReportSettings('signatoryTitle', e.target.value)}
+                     className="w-full bg-transparent border-none px-8 py-4 text-xl font-black text-[#334155] outline-none"
+                     placeholder="Contoh: Wali Kelas"
+                   />
+                 </div>
+               </div>
+             </div>
+           </div>
+          )}
+
+          {activeTab === 'assignments' && <div className="py-24 text-center text-slate-300 font-bold uppercase tracking-widest text-xs italic">Menu {activeTab} sedang dalam pengembangan</div>}
         </div>
       </div>
 

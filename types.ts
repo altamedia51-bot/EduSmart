@@ -4,6 +4,13 @@ export enum UserRole {
   STUDENT = 'STUDENT'
 }
 
+export interface ReportSettings {
+  schoolName: string;
+  period: string;
+  city: string;
+  signatoryTitle: string;
+}
+
 export interface Student {
   id: string;
   name: string;
@@ -52,4 +59,5 @@ export interface AppState {
   exams: Exam[];
   results: ExamResult[];
   assignments: Assignment[];
+  reportSettings: ReportSettings;
 }
