@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserRole, AppState } from './types';
-import { TeacherDashboard } from './components/TeacherDashboard';
-import { StudentDashboard } from './components/StudentDashboard';
-import { ReportGenerator } from './components/ReportGenerator';
-import { LoginScreen } from './components/LoginScreen';
+import { UserRole, AppState } from './types.ts';
+import { TeacherDashboard } from './components/TeacherDashboard.tsx';
+import { StudentDashboard } from './components/StudentDashboard.tsx';
+import { ReportGenerator } from './components/ReportGenerator.tsx';
+import { LoginScreen } from './components/LoginScreen.tsx';
 
 const INITIAL_STATE: AppState = {
   userRole: null as any,
@@ -85,8 +85,12 @@ const App: React.FC = () => {
 
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <p className="text-lg font-black text-[#1e293b] leading-none mb-1">S</p>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Teacher</p>
+            <p className="text-lg font-black text-[#1e293b] leading-none mb-1">
+              {currentRole === UserRole.TEACHER ? 'Guru' : 'Siswa'}
+            </p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+              {currentRole === UserRole.TEACHER ? 'Educator' : 'Student'}
+            </p>
           </div>
           <button onClick={handleLogout} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -95,7 +99,7 @@ const App: React.FC = () => {
       </nav>
 
       {/* Main Content Area */}
-      <main className="flex-grow container mx-auto px-4 py-6 max-w-7xl">
+      <main className="flex-grow container mx-auto px-4 py-6 max-w-7xl animate-in fade-in">
         {currentRole === UserRole.TEACHER ? (
           <TeacherDashboard state={{ ...state, userRole: currentRole }} onUpdate={updateState} />
         ) : (
@@ -104,7 +108,7 @@ const App: React.FC = () => {
       </main>
 
       {/* Hidden Print Generator */}
-      {currentRole === UserRole.TEACHER && (
+      {currentRole === UserRole.TEACHER && state.students.length > 0 && (
           <div className="print-only">
              <ReportGenerator student={state.students[0]} />
           </div>
