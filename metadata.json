@@ -1,5 +1,5 @@
 {
-  "name": "EduSmart AI - School Management & Exam System",
+  "name": "SMADA GENIUS - School Management & Exam System",
   "description": "A comprehensive school platform featuring teacher/student dashboards, anti-cheat exam modules, CSV student imports, and AI-powered digital report card generation using Gemini.",
   "requestFramePermissions": [
     "camera"

@@ -29,7 +29,7 @@ const INITIAL_STATE: AppState = {
   ],
   submissions: [],
   reportSettings: {
-    schoolName: 'SMADA GENIUS ACADEMY',
+    schoolName: 'SMADA GENIUS',
     period: 'Semester Ganjil 2024',
     city: 'Semarang',
     signatoryTitle: 'Wali Kelas'
@@ -91,7 +91,7 @@ const App: React.FC = () => {
             </svg>
           </div>
           <div>
-            <span className="text-xl font-black text-[#1e293b] tracking-tight block leading-none uppercase">EDUSMART AI</span>
+            <span className="text-xl font-black text-[#1e293b] tracking-tight block leading-none uppercase">SMADA GENIUS</span>
             <div className="flex items-center gap-1 mt-1">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
               <span className="text-[8px] font-black text-green-600 uppercase tracking-widest">Sistem Online</span>
@@ -127,7 +127,7 @@ const App: React.FC = () => {
       </main>
 
       <footer className="bg-white border-t border-slate-100 py-6 text-center no-print">
-         <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2024 EDUSMART AI - SMART SCHOOL MANAGEMENT SYSTEM</p>
+         <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">&copy; 2024 SMADA GENIUS - SMART SCHOOL MANAGEMENT SYSTEM</p>
       </footer>
 
       {currentRole === UserRole.TEACHER && state.students.length > 0 && (
