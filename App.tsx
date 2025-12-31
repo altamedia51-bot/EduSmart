@@ -8,25 +8,10 @@ import { LoginScreen } from './components/LoginScreen.tsx';
 
 const INITIAL_STATE: AppState = {
   userRole: null as any,
-  students: [
-    { id: '1', name: 'Alex Thompson', nis: '12345', email: 'alex@edu.com', class: 'XII MIPA 1', grades: { 'Math': 95, 'Science': 88, 'English': 92 } },
-    { id: '2', name: 'Sarah Miller', nis: '12346', email: 'sarah@edu.com', class: 'XII MIPA 2', grades: { 'Math': 75, 'Science': 82, 'English': 85 } }
-  ],
-  exams: [
-    { 
-      id: 'e1', title: 'Calculus Advanced Quiz', subject: 'Math', duration: 45, active: true, kkm: 75,
-      questions: [{ id: 'q1', text: 'Selesaikan integral dari sin(x)', options: ['-cos(x)', 'cos(x)', 'tan(x)', 'sec(x)'], correctAnswer: 0 }],
-      targetClasses: ['XII MIPA 1', 'XII MIPA 2']
-    }
-  ],
-  results: [
-    { studentId: '1', examId: 'e-prev', score: 92, cheated: false, timestamp: Date.now() - 86400000 },
-    { studentId: '1', examId: 'e-prev2', score: 85, cheated: false, timestamp: Date.now() - 172800000 },
-    { studentId: '2', examId: 'e-prev', score: 78, cheated: false, timestamp: Date.now() - 86400000 },
-  ],
-  assignments: [
-    { id: 'a1', title: 'Laporan Lab Biologi', description: 'Kumpulkan sebelum Jumat', deadline: '20 Mei 2024' }
-  ],
+  students: [],
+  exams: [],
+  results: [],
+  assignments: [],
   submissions: [],
   reportSettings: {
     schoolName: 'SMADA GENIUS',
