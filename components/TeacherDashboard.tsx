@@ -129,10 +129,10 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
     setNewExam({
       title: exam.title,
       subject: exam.subject,
-      kkm: exam.kkm,
+      kkm: exam.kkm || 75,
       duration: exam.duration,
-      questions: [...exam.questions],
-      targetClasses: [...(exam.targetClasses || [])]
+      questions: JSON.parse(JSON.stringify(exam.questions)), // Deep copy to avoid mutating state directly
+      targetClasses: [...(exam.targetClasses || ['XII MIPA 1'])]
     });
     setShowCreateModal(true);
   };
@@ -192,7 +192,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
         submissions: filteredSubmissions 
       });
       
-      // Jika sedang melihat raport siswa yang dihapus, tutup tampilannya
       if (viewingReportStudent?.id === id) {
         setViewingReportStudent(null);
       }
@@ -411,6 +410,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                       <td className="px-8 py-10 text-right">
                         <div className="flex justify-end gap-3">
                           <button onClick={() => setPreviewExam(exam)} className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-100 transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg></button>
+                          <button onClick={() => handleEditExam(exam)} className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-100 transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg></button>
                           <button onClick={() => toggleExamStatus(exam.id)} className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${exam.active ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg></button>
                           <button onClick={() => deleteExam(exam.id)} className="w-10 h-10 bg-slate-50 text-slate-300 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-red-500 transition-all"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                         </div>
@@ -519,10 +519,10 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
         </div>
       </div>
 
-      {/* Modal Buat Ujian */}
+      {/* Modal Buat / Edit Ujian */}
       {showCreateModal && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in-95 duration-300">
+          <div className="bg-white w-full max-w-5xl rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in-95 duration-300">
             <div className="flex justify-between items-center mb-10 border-b pb-6 text-slate-800">
               <h2 className="text-2xl font-black uppercase tracking-tight">{editingExamId ? 'EDIT UJIAN' : 'BUAT UJIAN BARU'}</h2>
               <button onClick={() => setShowCreateModal(false)} className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors"><svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg></button>
@@ -536,23 +536,33 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-700 uppercase tracking-widest ml-2 mb-2 block">Mata Pelajaran</label>
-                  <input type="text" value={newExam.subject} onChange={e => setNewExam({...newExam, subject: e.target.value})} className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl font-bold text-slate-800 outline-none" placeholder="Contoh: Matematika" />
+                  <input type="text" value={newExam.subject} onChange={e => setNewExam({...newExam, subject: e.target.value})} className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl font-bold text-slate-800 outline-none ring-2 ring-transparent focus:ring-[#5b59e5]/10" placeholder="Contoh: Matematika" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black text-slate-700 uppercase tracking-widest ml-2 mb-2 block">Target Kelas (Pisahkan dengan koma)</label>
+                  <input 
+                    type="text" 
+                    value={newExam.targetClasses?.join(', ') || ''} 
+                    onChange={e => setNewExam({...newExam, targetClasses: e.target.value.split(',').map(c => c.trim()).filter(c => c !== '')})} 
+                    className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl font-bold text-slate-800 outline-none ring-2 ring-transparent focus:ring-[#5b59e5]/10" 
+                    placeholder="Contoh: XII MIPA 1, XII MIPA 2" 
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-2 mb-2 block">Durasi (Menit)</label>
-                    <input type="number" value={newExam.duration} onChange={e => setNewExam({...newExam, duration: parseInt(e.target.value) || 0})} className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl font-bold text-slate-800 outline-none ring-1 ring-slate-100 focus:ring-[#5b59e5]/20" />
+                    <input type="number" value={newExam.duration} onChange={e => setNewExam({...newExam, duration: parseInt(e.target.value) || 0})} className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl font-bold text-slate-800 outline-none ring-1 ring-slate-100 focus:ring-[#5b59e5]/20 shadow-inner" />
                   </div>
                   <div>
                     <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest ml-2 mb-2 block">KKM</label>
-                    <input type="number" value={newExam.kkm} onChange={e => setNewExam({...newExam, kkm: parseInt(e.target.value) || 75})} className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl font-bold text-slate-800 outline-none ring-1 ring-slate-100 focus:ring-[#5b59e5]/20" />
+                    <input type="number" value={newExam.kkm} onChange={e => setNewExam({...newExam, kkm: parseInt(e.target.value) || 75})} className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl font-bold text-slate-800 outline-none ring-1 ring-slate-100 focus:ring-[#5b59e5]/20 shadow-inner" />
                   </div>
                 </div>
 
                 <div className="bg-indigo-50/50 p-6 rounded-[2rem] border border-indigo-100">
                   <h3 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-4 flex items-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                    GENERATE DENGAN AI
+                    TAMBAH SOAL VIA AI
                   </h3>
                   
                   <div className="space-y-4 mb-4">
@@ -591,32 +601,52 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
               
               <div className="space-y-4">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Daftar Soal ({newExam.questions?.length || 0})</h3>
-                  <button onClick={() => setNewExam({...newExam, questions: [...(newExam.questions || []), { id: Date.now().toString(), text: '', options: ['', '', '', ''], correctAnswer: 0 }]})} className="bg-[#eff2ff] text-[#5b59e5] font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl hover:bg-indigo-100 transition-all">+ Manual</button>
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Daftar Soal & Opsi ({newExam.questions?.length || 0})</h3>
+                  <button onClick={() => setNewExam({...newExam, questions: [...(newExam.questions || []), { id: Date.now().toString(), text: '', options: ['', '', '', ''], correctAnswer: 0 }]})} className="bg-[#eff2ff] text-[#5b59e5] font-black text-[10px] uppercase tracking-widest px-4 py-2 rounded-xl hover:bg-indigo-100 transition-all">+ Tambah Manual</button>
                 </div>
                 <div className="space-y-6">
                   {newExam.questions?.map((q, idx) => (
-                    <div key={q.id} className="bg-slate-50 p-6 rounded-3xl relative group border border-slate-100">
-                      <button onClick={() => setNewExam({...newExam, questions: newExam.questions?.filter(sq => sq.id !== q.id)})} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">SOAL #{idx + 1}</p>
-                      <input type="text" value={q.text} onChange={e => {
-                        const updatedQuestions = [...(newExam.questions || [])];
-                        updatedQuestions[idx].text = e.target.value;
-                        setNewExam({...newExam, questions: updatedQuestions});
-                      }} className="w-full bg-white border border-slate-100 px-4 py-3 rounded-xl font-bold mb-4 text-slate-800 outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Ketik pertanyaan..." />
-                      <div className="grid grid-cols-2 gap-2">
+                    <div key={q.id} className="bg-slate-50 p-6 rounded-3xl relative group border border-slate-200">
+                      <button onClick={() => setNewExam({...newExam, questions: newExam.questions?.filter(sq => sq.id !== q.id)})} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">PERTANYAAN #{idx + 1}</p>
+                      <input 
+                        type="text" 
+                        value={q.text} 
+                        onChange={e => {
+                          const updatedQuestions = [...(newExam.questions || [])];
+                          updatedQuestions[idx] = { ...updatedQuestions[idx], text: e.target.value };
+                          setNewExam({...newExam, questions: updatedQuestions});
+                        }} 
+                        className="w-full bg-white border border-slate-200 px-4 py-3 rounded-xl font-bold mb-4 text-slate-800 outline-none focus:ring-2 focus:ring-indigo-100 shadow-sm" 
+                        placeholder="Ketik pertanyaan..." 
+                      />
+                      <div className="grid grid-cols-2 gap-3">
                         {q.options.map((opt, oIdx) => (
                           <div key={oIdx} className="flex items-center gap-2">
-                            <input type="radio" checked={q.correctAnswer === oIdx} onChange={() => {
-                              const updatedQuestions = [...(newExam.questions || [])];
-                              updatedQuestions[idx].correctAnswer = oIdx;
-                              setNewExam({...newExam, questions: updatedQuestions});
-                            }} className="accent-[#5b59e5] w-4 h-4" />
-                            <input type="text" value={opt} onChange={e => {
-                              const updatedQuestions = [...(newExam.questions || [])];
-                              updatedQuestions[idx].options[oIdx] = e.target.value;
-                              setNewExam({...newExam, questions: updatedQuestions});
-                            }} className="flex-1 bg-white border border-slate-100 px-3 py-2 rounded-lg text-xs font-bold text-slate-700 outline-none" placeholder={`Opsi ${oIdx + 1}`} />
+                            <input 
+                              type="radio" 
+                              name={`correct-${q.id}`} 
+                              checked={q.correctAnswer === oIdx} 
+                              onChange={() => {
+                                const updatedQuestions = [...(newExam.questions || [])];
+                                updatedQuestions[idx] = { ...updatedQuestions[idx], correctAnswer: oIdx };
+                                setNewExam({...newExam, questions: updatedQuestions});
+                              }} 
+                              className="accent-[#5b59e5] w-4 h-4 cursor-pointer" 
+                            />
+                            <input 
+                              type="text" 
+                              value={opt} 
+                              onChange={e => {
+                                const updatedQuestions = [...(newExam.questions || [])];
+                                const updatedOptions = [...updatedQuestions[idx].options];
+                                updatedOptions[oIdx] = e.target.value;
+                                updatedQuestions[idx] = { ...updatedQuestions[idx], options: updatedOptions };
+                                setNewExam({...newExam, questions: updatedQuestions});
+                              }} 
+                              className={`flex-1 bg-white border border-slate-200 px-3 py-2 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-50 shadow-sm ${q.correctAnswer === oIdx ? 'text-indigo-600 ring-1 ring-indigo-200' : 'text-slate-700'}`} 
+                              placeholder={`Opsi ${oIdx + 1}`} 
+                            />
                           </div>
                         ))}
                       </div>
@@ -641,7 +671,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
             <div className="flex justify-between items-center mb-8 border-b pb-4">
               <div>
                 <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight mb-1">{previewExam.title}</h2>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{previewExam.subject} • {previewExam.questions.length} SOAL</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{previewExam.subject} • {previewExam.questions.length} SOAL • {previewExam.targetClasses?.join(', ') || 'Semua Kelas'}</p>
               </div>
               <button onClick={() => setPreviewExam(null)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
