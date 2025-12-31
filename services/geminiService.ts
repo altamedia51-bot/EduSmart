@@ -1,16 +1,28 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Safe access to API KEY for browser environment
+const getApiKey = () => {
+  try {
+    return (window as any).process?.env?.API_KEY || (typeof process !== 'undefined' ? process.env.API_KEY : '');
+  } catch {
+    return '';
+  }
+};
+
+const apiKey = getApiKey();
 
 export const generateReportComment = async (studentName: string, grades: Record<string, number>): Promise<string> => {
+  if (!apiKey) return "API Key tidak terdeteksi. Silakan konfigurasi API Key Anda.";
+  
+  const ai = new GoogleGenAI({ apiKey });
   const gradesContext = Object.entries(grades)
     .map(([subject, score]) => `${subject}: ${score}`)
     .join(', ');
 
-  const prompt = `Write a professional, encouraging, and detailed academic report card comment for a student named ${studentName}. 
-  Current performance context: ${gradesContext}. 
-  Mention strengths and areas for improvement. Keep it within 100 words.`;
+  const prompt = `Tuliskan komentar raport akademik yang profesional, menyemangati, dan detail dalam Bahasa Indonesia untuk siswa bernama ${studentName}. 
+  Konteks nilai saat ini: ${gradesContext}. 
+  Sebutkan kekuatan dan area yang perlu ditingkatkan. Maksimal 100 kata.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -18,24 +30,26 @@ export const generateReportComment = async (studentName: string, grades: Record<
       contents: prompt,
       config: {
         temperature: 0.7,
-        topP: 0.9,
       }
     });
 
-    return response.text || "Report comment could not be generated at this time.";
+    return response.text || "Gagal menghasilkan komentar saat ini.";
   } catch (error) {
     console.error("AI Error:", error);
-    return "The system encountered an error while generating the report comment.";
+    return "Terjadi kesalahan sistem saat menghubungi AI.";
   }
 };
 
 export const generateQuestions = async (materialText: string, subject: string, count: number = 5): Promise<any[]> => {
-  const prompt = `Generate ${count} multiple choice questions about ${subject} based on the following material: ${materialText}. 
-  Each question should have 4 options and 1 correct answer (0-indexed).`;
+  if (!apiKey) throw new Error("API Key tidak ditemukan.");
+
+  const ai = new GoogleGenAI({ apiKey });
+  const prompt = `Generate ${count} multiple choice questions in Indonesian about ${subject} based on the following material: ${materialText}. 
+  Return as a JSON array of objects with "text", "options" (array of 4 strings), and "correctAnswer" (integer 0-3).`;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         responseMimeType: "application/json",
