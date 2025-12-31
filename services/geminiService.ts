@@ -13,7 +13,7 @@ export const generateReportComment = async (studentName: string, grades: Record<
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash-preview-tts',
       contents: prompt,
       config: {
         temperature: 0.7,
@@ -27,15 +27,29 @@ export const generateReportComment = async (studentName: string, grades: Record<
   }
 };
 
-export const generateQuestions = async (materialText: string, subject: string, count: number = 5): Promise<any[]> => {
+export const generateQuestions = async (materialText: string, subject: string, count: number = 5, imageData?: { data: string, mimeType: string }): Promise<any[]> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const prompt = `Generate ${count} multiple choice questions in Indonesian about ${subject} based on the following material: ${materialText}. 
+  
+  let parts: any[] = [];
+  
+  if (imageData) {
+    parts.push({
+      inlineData: {
+        data: imageData.data,
+        mimeType: imageData.mimeType
+      }
+    });
+  }
+
+  const prompt = `Generate ${count} multiple choice questions in Indonesian about ${subject} ${materialText ? `based on the following material: ${materialText}` : 'based on the provided image'}. 
   Return as a JSON array of objects with "text", "options" (array of 4 strings), and "correctAnswer" (integer 0-3).`;
+
+  parts.push({ text: prompt });
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: prompt,
+      contents: { parts },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
