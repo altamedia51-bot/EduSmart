@@ -1,21 +1,8 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-// Safe access to API KEY for browser environment
-const getApiKey = () => {
-  try {
-    return (window as any).process?.env?.API_KEY || (typeof process !== 'undefined' ? process.env.API_KEY : '');
-  } catch {
-    return '';
-  }
-};
-
-const apiKey = getApiKey();
-
 export const generateReportComment = async (studentName: string, grades: Record<string, number>): Promise<string> => {
-  if (!apiKey) return "API Key tidak terdeteksi. Silakan konfigurasi API Key Anda.";
-  
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const gradesContext = Object.entries(grades)
     .map(([subject, score]) => `${subject}: ${score}`)
     .join(', ');
@@ -41,9 +28,7 @@ export const generateReportComment = async (studentName: string, grades: Record<
 };
 
 export const generateQuestions = async (materialText: string, subject: string, count: number = 5): Promise<any[]> => {
-  if (!apiKey) throw new Error("API Key tidak ditemukan.");
-
-  const ai = new GoogleGenAI({ apiKey });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const prompt = `Generate ${count} multiple choice questions in Indonesian about ${subject} based on the following material: ${materialText}. 
   Return as a JSON array of objects with "text", "options" (array of 4 strings), and "correctAnswer" (integer 0-3).`;
 

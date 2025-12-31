@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Exam, Question, ExamResult } from '../types';
+import { Exam, Question, ExamResult } from '../types.ts';
 
 interface ExamModuleProps {
   exam: Exam;

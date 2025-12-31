@@ -1,8 +1,8 @@
 
 import React, { useState, useRef } from 'react';
-import { Student, Exam, AppState, Question } from '../types';
-import { generateQuestions } from '../services/geminiService';
-import { ReportGenerator } from './ReportGenerator';
+import { Student, Exam, AppState, Question } from '../types.ts';
+import { generateQuestions } from '../services/geminiService.ts';
+import { ReportGenerator } from './ReportGenerator.tsx';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface TeacherDashboardProps {
@@ -190,12 +190,10 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
     const s = viewingReportStudent;
     const scores = Object.values(s.grades) as number[];
     const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-    // Fix: Explicitly cast score to number to resolve 'unknown' operator comparison error on line 286 (within the chart mapping)
     const chartData = Object.entries(s.grades).map(([name, score]) => ({ name, score: score as number }));
 
     return (
       <div className="animate-in fade-in zoom-in-95 duration-500 max-w-7xl mx-auto">
-        {/* Modern Header Profile */}
         <div className="bg-white rounded-[3rem] p-8 mb-8 shadow-xl shadow-slate-100 flex items-center justify-between border border-gray-50">
           <div className="flex items-center gap-6">
             <div className="w-24 h-24 bg-[#5b59e5] text-white rounded-[2rem] flex items-center justify-center font-black text-4xl shadow-2xl shadow-indigo-200">
@@ -242,7 +240,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
 
         {reportSubTab === 'performa' && (
           <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
-            {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                <div className="bg-white p-10 rounded-[2.5rem] shadow-xl shadow-slate-100 border border-gray-50 flex flex-col justify-between min-h-[220px]">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">TOTAL RATA-RATA</p>
@@ -272,7 +269,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                </div>
             </div>
 
-            {/* Large Progress Chart */}
             <div className="bg-white rounded-[3rem] p-12 shadow-xl shadow-slate-100 border border-gray-50">
               <h2 className="text-2xl font-black text-[#1e293b] uppercase tracking-tight mb-12">GRAFIK PROGRES NILAI</h2>
               <div className="h-[400px]">
@@ -466,7 +462,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
         </div>
       </div>
 
-      {/* MODALS REMAIN THE SAME */}
       {previewExam && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
           <div className="bg-white w-[80vw] max-w-4xl max-h-[85vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden">

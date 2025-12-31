@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Student } from '../types';
-import { generateReportComment } from '../services/geminiService';
+import { Student } from '../types.ts';
+import { generateReportComment } from '../services/geminiService.ts';
 
 interface ReportGeneratorProps {
   student: Student;
@@ -59,7 +59,6 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student }) => 
           </thead>
           <tbody>
             {Object.entries(student.grades).map(([subject, score]) => {
-              // Fix: Cast score to number to resolve 'unknown' operator comparison error
               const s = score as number;
               return (
                 <tr key={subject}>
