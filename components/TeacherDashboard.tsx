@@ -62,16 +62,25 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
     const checkKey = async () => {
       if (window.aistudio) {
         const result = await window.aistudio.hasSelectedApiKey();
-        if (result) setHasApiKey(true);
+        setHasApiKey(result || !!process.env.API_KEY);
+      } else {
+        setHasApiKey(!!process.env.API_KEY);
       }
     };
     checkKey();
+    // Re-check periodically in case process.env updates
+    const interval = setInterval(checkKey, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleOpenKeyDialog = async () => {
     if (window.aistudio) {
-      await window.aistudio.openSelectKey();
-      setHasApiKey(true); 
+      try {
+        await window.aistudio.openSelectKey();
+        setHasApiKey(true); 
+      } catch (err) {
+        console.error("Gagal membuka dialog kunci:", err);
+      }
     }
   };
 
@@ -163,6 +172,19 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
   const triggerImageSelect = () => imageInputRef.current?.click();
 
   const handleAiGenerate = async () => {
+    // Proactive API Key check
+    if (!process.env.API_KEY && (!window.aistudio || !(await window.aistudio.hasSelectedApiKey()))) {
+      if (window.aistudio) {
+        if (confirm("API Key belum terhubung. Apakah Anda ingin menghubungkannya sekarang di menu Pengaturan?")) {
+          setShowCreateModal(false);
+          setActiveTab('settings');
+        }
+      } else {
+        alert("API Key tidak terdeteksi. Silakan periksa konfigurasi server atau hubungi admin.");
+      }
+      return;
+    }
+
     if (!aiMaterial && !aiImage) {
       alert("Silakan isi materi teks atau unggah gambar materi.");
       return;
@@ -181,8 +203,13 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
       setAiMaterial('');
       setAiImage(null);
       setAiImagePreview(null);
-    } catch (error) {
-      alert(`Gagal membuat soal: ${error instanceof Error ? error.message : 'Unknown Error'}. Pastikan API Key terpasang.`);
+    } catch (error: any) {
+      const errorMsg = error.message || "Unknown Error";
+      if (errorMsg.includes("403") || errorMsg.includes("API key not valid")) {
+        alert("Kunci API tidak valid atau telah kedaluwarsa. Silakan hubungkan kembali di menu Pengaturan.");
+      } else {
+        alert(`Gagal membuat soal: ${errorMsg}. Pastikan koneksi internet stabil.`);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -564,7 +591,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                })}
                {studentsInClass.length === 0 && (
                  <div className="col-span-full py-24 text-center">
-                   <div className="w-20 h-20 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                   <div className="w-20 h-20 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center mb-6">
                       <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0" /></svg>
                    </div>
                    <p className="text-slate-300 font-black text-[10px] uppercase tracking-widest italic">Belum ada siswa di kelas {selectedClass}.</p>
@@ -591,23 +618,33 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                     <div className="bg-white p-8 rounded-3xl border border-indigo-100 shadow-sm flex flex-col justify-between">
                       <div>
                         <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">API Smart Engine</h4>
-                        <p className="text-xs text-slate-500 font-medium mb-6">Status: {hasApiKey ? <span className="text-green-600 font-black">TERHUBUNG</span> : <span className="text-red-500 font-black">BELUM TERHUBUNG</span>}</p>
+                        <div className="flex items-center gap-2 mb-4">
+                           <span className={`w-2 h-2 rounded-full ${hasApiKey ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+                           <p className="text-xs text-slate-500 font-medium">Status: {hasApiKey ? <span className="text-green-600 font-black uppercase">TERHUBUNG</span> : <span className="text-red-500 font-black uppercase">TERPUTUS</span>}</p>
+                        </div>
                       </div>
                       {window.aistudio && (
-                        <button onClick={handleOpenKeyDialog} className="w-full bg-[#5b59e5] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center justify-center gap-2">
+                        <button 
+                          onClick={handleOpenKeyDialog} 
+                          className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2 ${!hasApiKey ? 'bg-[#5b59e5] text-white animate-pulse' : 'bg-slate-100 text-slate-500'}`}
+                        >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
-                          PILIH KUNCI API
+                          {hasApiKey ? 'HUBUNGKAN ULANG' : 'HUBUNGKAN KUNCI API'}
                         </button>
                       )}
                       {!window.aistudio && !hasApiKey && (
-                        <p className="text-[9px] font-bold text-rose-500 uppercase leading-relaxed italic">Catatan: Harap konfigurasi API_KEY di environment variable server Anda untuk menggunakan fitur AI.</p>
+                        <div className="p-4 bg-rose-50 rounded-xl border border-rose-100">
+                          <p className="text-[9px] font-bold text-rose-500 uppercase leading-relaxed italic">
+                            PERINGATAN: Fitur AI dinonaktifkan. Silakan buka aplikasi melalui AI Studio atau pasang API_KEY di environment server Anda.
+                          </p>
+                        </div>
                       )}
                     </div>
                     
                     <div className="bg-white p-8 rounded-3xl border border-indigo-100 shadow-sm flex flex-col justify-between">
                       <div>
                         <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Pencadangan Data</h4>
-                        <p className="text-xs text-slate-500 font-medium mb-6">Cadangkan seluruh data sekolah Anda ke dalam file digital.</p>
+                        <p className="text-xs text-slate-500 font-medium mb-6">Simpan seluruh database ujian dan siswa secara manual untuk keamanan.</p>
                       </div>
                       <div className="flex gap-2">
                         <button onClick={exportDatabase} className="flex-1 border-2 border-[#5b59e5] text-[#5b59e5] py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 transition-all active:scale-95">EKSPOR</button>
