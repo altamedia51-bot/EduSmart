@@ -46,10 +46,11 @@
     }
     </script>
     <script>
-      // Definisikan process.env hanya jika belum ada (mencegah overwriting di environment tertentu)
+      // Pastikan process.env tersedia tanpa menimpa variabel yang sudah ada
       window.process = window.process || {};
       window.process.env = window.process.env || {};
-      if (typeof window.process.env.API_KEY === 'undefined') {
+      // Jangan timpa jika sudah ada nilainya (misal dari Vercel)
+      if (!window.process.env.API_KEY) {
         window.process.env.API_KEY = "";
       }
     </script>
