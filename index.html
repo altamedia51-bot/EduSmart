@@ -26,6 +26,11 @@
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
       }
+      /* Custom Scrollbar */
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
     </style>
     <script type="importmap">
     {
@@ -41,8 +46,12 @@
     }
     </script>
     <script>
-      // Shim process.env for browser environment to prevent "process is not defined" errors
-      window.process = { env: { API_KEY: "" } };
+      // Definisikan process.env hanya jika belum ada (mencegah overwriting di environment tertentu)
+      window.process = window.process || {};
+      window.process.env = window.process.env || {};
+      if (typeof window.process.env.API_KEY === 'undefined') {
+        window.process.env.API_KEY = "";
+      }
     </script>
   </head>
   <body>
@@ -50,7 +59,7 @@
       <div class="min-h-screen flex items-center justify-center bg-slate-50">
         <div class="text-center">
           <div class="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">Memulai Sistem SMADA GENIUS...</p>
+          <p class="text-slate-400 font-bold uppercase tracking-widest text-xs">Memasuki SMADA GENIUS...</p>
         </div>
       </div>
     </div>

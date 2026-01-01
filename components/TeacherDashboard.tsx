@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Student, Exam, AppState, Question, ReportSettings, Submission } from '../types.ts';
 import { generateQuestions } from '../services/geminiService.ts';
 import { ReportGenerator } from './ReportGenerator.tsx';
@@ -9,6 +9,18 @@ interface TeacherDashboardProps {
   onUpdate: (newState: Partial<AppState>) => void;
 }
 
+// Fixed global declaration of aistudio to use the correct AIStudio type name.
+declare global {
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
+
+  interface Window {
+    aistudio: AIStudio;
+  }
+}
+
 export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpdate }) => {
   const [activeTab, setActiveTab] = useState<'exams' | 'assignments' | 'students' | 'reports' | 'settings'>('exams');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -16,6 +28,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
   const [editingExamId, setEditingExamId] = useState<string | null>(null);
   const [csvInput, setCsvInput] = useState('');
   const [showImportArea, setShowImportArea] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(!!process.env.API_KEY);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const dbImportRef = useRef<HTMLInputElement>(null);
@@ -43,6 +57,25 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
   // Grading State
   const [gradingSubmission, setGradingSubmission] = useState<Submission | null>(null);
   const [gradeValue, setGradeValue] = useState<number>(0);
+
+  useEffect(() => {
+    const checkKey = async () => {
+      if (window.aistudio) {
+        const result = await window.aistudio.hasSelectedApiKey();
+        if (result) setHasApiKey(true);
+      }
+    };
+    checkKey();
+  }, []);
+
+  const handleOpenKeyDialog = async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+      setHasApiKey(true); // Assume success per guidelines
+    } else {
+      alert("Fitur pemilihan kunci hanya tersedia di lingkungan AI Studio.");
+    }
+  };
 
   const processCsvData = (content: string) => {
     const lines = content.split('\n');
@@ -151,7 +184,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
       setAiImage(null);
       setAiImagePreview(null);
     } catch (error) {
-      alert("Gagal membuat soal dengan AI.");
+      alert(`Gagal membuat soal: ${error instanceof Error ? error.message : 'Unknown Error'}. Pastikan API Key sudah terpasang di menu Pengaturan.`);
     } finally {
       setIsGenerating(false);
     }
@@ -528,7 +561,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-[#1e293b] uppercase tracking-tight">Pusat Sinkronisasi Data</h3>
+                      <h3 className="text-xl font-black text-[#1e293b] uppercase tracking-tight">Konektivitas & Sinkronisasi</h3>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cegah data hilang saat keluar dari Incognito</p>
                     </div>
                   </div>
@@ -536,31 +569,31 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="bg-white p-8 rounded-3xl border border-indigo-100 shadow-sm flex flex-col justify-between">
                       <div>
-                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Pencadangan Lokal</h4>
-                        <p className="text-xs text-slate-500 font-medium mb-6">Unduh file database (.json) untuk disimpan di perangkat Anda.</p>
+                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">API Smart Engine</h4>
+                        <p className="text-xs text-slate-500 font-medium mb-6">Status: {hasApiKey ? <span className="text-green-600 font-black">AKTIF</span> : <span className="text-red-500 font-black">MATI (Generate AI Tidak Bisa)</span>}</p>
                       </div>
-                      <button onClick={exportDatabase} className="w-full bg-[#5b59e5] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                        EKSPOR DATABASE
+                      <button onClick={handleOpenKeyDialog} className="w-full bg-[#5b59e5] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                        AKTIFKAN AI ENGINE
                       </button>
                     </div>
                     
                     <div className="bg-white p-8 rounded-3xl border border-indigo-100 shadow-sm flex flex-col justify-between">
                       <div>
-                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Pemulihan Data</h4>
-                        <p className="text-xs text-slate-500 font-medium mb-6">Unggah kembali file cadangan jika data terhapus secara tidak sengaja.</p>
+                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Backup Lokal</h4>
+                        <p className="text-xs text-slate-500 font-medium mb-6">Cadangkan seluruh data sekolah Anda ke dalam file digital.</p>
                       </div>
-                      <button onClick={() => dbImportRef.current?.click()} className="w-full border-2 border-[#5b59e5] text-[#5b59e5] py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition-all active:scale-95 flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                        IMPOR DATABASE
-                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={exportDatabase} className="flex-1 border-2 border-[#5b59e5] text-[#5b59e5] py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-50 transition-all active:scale-95">EKSPOR</button>
+                        <button onClick={() => dbImportRef.current?.click()} className="flex-1 bg-slate-800 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all active:scale-95">IMPOR</button>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="mt-8 p-6 bg-amber-50 rounded-2xl border border-amber-100 flex items-start gap-4">
-                     <svg className="w-6 h-6 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                     <p className="text-[10px] font-bold text-amber-700 uppercase tracking-tight leading-relaxed">
-                       Saran Senior Engineer: Gunakan mode Incognito hanya untuk pengujian. Untuk penggunaan harian, gunakan browser normal agar sistem sinkronisasi otomatis ke LocalStorage berfungsi maksimal tanpa perlu ekspor/impor manual.
+                  <div className="mt-8 p-6 bg-blue-50 rounded-2xl border border-blue-100 flex items-start gap-4">
+                     <svg className="w-6 h-6 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                     <p className="text-[10px] font-bold text-blue-700 uppercase tracking-tight leading-relaxed">
+                       Saran Deployment: Jika Anda menggunakan Vercel, pastikan API_KEY telah didaftarkan pada Environment Variables dashboard Vercel Anda. Gunakan tombol "Aktifkan AI Engine" di atas jika kunci tidak terdeteksi otomatis.
                      </p>
                   </div>
                </section>
@@ -722,7 +755,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                                 updatedQuestions[idx] = { ...updatedQuestions[idx], options: updatedOptions };
                                 setNewExam({...newExam, questions: updatedQuestions});
                               }} 
-                              className={`flex-1 bg-white border border-slate-200 px-3 py-2 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-50 shadow-sm ${q.correctAnswer === oIdx ? 'text-indigo-600 ring-1 ring-indigo-200' : 'text-slate-700'}`} 
+                              className={`flex-1 bg-white border border-slate-200 px-3 py-2 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-5 shadow-sm ${q.correctAnswer === oIdx ? 'text-indigo-600 ring-1 ring-indigo-200' : 'text-slate-700'}`} 
                               placeholder={`Opsi ${oIdx + 1}`} 
                             />
                           </div>

@@ -1,8 +1,18 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
+const getApiKey = () => {
+  return process.env.API_KEY || "";
+};
+
+// Use 'gemini-3-flash-preview' for basic text generation tasks like report comments.
 export const generateReportComment = async (studentName: string, grades: Record<string, number>): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    return "Error: API Key tidak ditemukan. Silakan konfigurasi di Pengaturan Guru.";
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   const gradesContext = Object.entries(grades)
     .map(([subject, score]) => `${subject}: ${score}`)
     .join(', ');
@@ -13,7 +23,7 @@ export const generateReportComment = async (studentName: string, grades: Record<
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-preview-tts',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         temperature: 0.7,
@@ -23,12 +33,18 @@ export const generateReportComment = async (studentName: string, grades: Record<
     return response.text || "Gagal menghasilkan komentar saat ini.";
   } catch (error) {
     console.error("AI Error:", error);
-    return "Terjadi kesalahan sistem saat menghubungi AI.";
+    return `Terjadi kesalahan sistem: ${error instanceof Error ? error.message : 'Unknown Error'}`;
   }
 };
 
+// Use 'gemini-3-pro-preview' for complex text reasoning tasks like generating quiz questions from material.
 export const generateQuestions = async (materialText: string, subject: string, count: number = 5, imageData?: { data: string, mimeType: string }): Promise<any[]> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error("API Key tidak ditemukan. Silakan hubungkan API Key di menu Pengaturan.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
   
   let parts: any[] = [];
   
@@ -41,14 +57,14 @@ export const generateQuestions = async (materialText: string, subject: string, c
     });
   }
 
-  const prompt = `Generate ${count} multiple choice questions in Indonesian about ${subject} ${materialText ? `based on the following material: ${materialText}` : 'based on the provided image'}. 
-  Return as a JSON array of objects with "text", "options" (array of 4 strings), and "correctAnswer" (integer 0-3).`;
+  const prompt = `Hasilkan ${count} soal pilihan ganda dalam Bahasa Indonesia tentang ${subject} ${materialText ? `berdasarkan materi berikut: ${materialText}` : 'berdasarkan gambar yang diberikan'}. 
+  Kembalikan sebagai JSON array objek dengan properti: "text", "options" (array 4 string), dan "correctAnswer" (integer 0-3).`;
 
   parts.push({ text: prompt });
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: { parts },
       config: {
         responseMimeType: "application/json",
