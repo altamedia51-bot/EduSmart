@@ -9,7 +9,7 @@ interface TeacherDashboardProps {
   onUpdate: (newState: Partial<AppState>) => void;
 }
 
-// Fixed global declaration of aistudio to use the correct AIStudio type name.
+// Fixed global declaration of aistudio to use the correct AIStudio type name and optional modifier.
 declare global {
   interface AIStudio {
     hasSelectedApiKey: () => Promise<boolean>;
@@ -17,7 +17,8 @@ declare global {
   }
 
   interface Window {
-    aistudio: AIStudio;
+    /* Use optional modifier to match potential existing global definitions. */
+    aistudio?: AIStudio;
   }
 }
 
@@ -184,7 +185,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
       setAiImage(null);
       setAiImagePreview(null);
     } catch (error) {
-      alert(`Gagal membuat soal: ${error instanceof Error ? error.message : 'Unknown Error'}. Pastikan API Key sudah terpasang di menu Pengaturan.`);
+      alert(`Gagal membuat soal: ${error instanceof Error ? error.message : 'Unknown Error'}. Pastikan API Key sudah terpasang.`);
     } finally {
       setIsGenerating(false);
     }
@@ -314,6 +315,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
     onUpdate({ submissions: updatedSubmissions, students: updatedStudents });
     setGradingSubmission(null);
     alert('Nilai tugas berhasil disimpan!');
+  };
+
+  const calculateStudentAverage = (studentId: string) => {
+    const studentResults = state.results.filter(r => r.studentId === studentId);
+    const studentSubmissions = state.submissions.filter(s => s.studentId === studentId && s.status === 'GRADED');
+    const allScores = [...studentResults.map(r => r.score), ...studentSubmissions.map(s => s.score || 0)];
+    
+    if (allScores.length === 0) return 0;
+    return Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length);
   };
 
   const classes = Array.from(new Set(state.students.map(s => s.class))).sort();
@@ -522,25 +532,39 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
 
           {activeTab === 'reports' && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-12">
-               {studentsInClass.map(s => (
-                  <div key={s.id} className="bg-white border border-slate-100 rounded-[2.5rem] p-8 hover:shadow-2xl transition-all flex flex-col gap-6 group relative overflow-hidden">
-                     <div className="flex justify-between items-start relative z-10">
-                        <div className="w-14 h-14 bg-[#eff2ff] text-[#5b59e5] rounded-full flex items-center justify-center font-black text-xl group-hover:bg-[#5b59e5] group-hover:text-white transition-all">{s.name.charAt(0)}</div>
-                        <button 
-                          onClick={(e) => { e.stopPropagation(); deleteStudent(s.id); }} 
-                          className="p-3 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" 
-                          title="Hapus Siswa"
-                        >
-                           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                     </div>
-                     <div className="relative z-10">
-                       <h4 className="text-lg font-black text-[#1e293b] uppercase tracking-tight leading-none mb-1">{s.name}</h4>
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NIS {s.nis}</p>
-                     </div>
-                     <button onClick={() => { setViewingReportStudent(s); setReportSubTab('raport'); }} className="relative z-10 w-full py-4 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black text-slate-800 uppercase tracking-widest hover:bg-[#5b59e5] hover:text-white hover:border-transparent transition-all">Lihat Raport Digital</button>
-                  </div>
-               ))}
+               {studentsInClass.map(s => {
+                  const studentAvg = calculateStudentAverage(s.id);
+                  return (
+                    <div key={s.id} className="bg-white border border-slate-100 rounded-[2.5rem] p-8 hover:shadow-2xl transition-all flex flex-col gap-6 group relative overflow-hidden">
+                       <div className="flex justify-between items-start relative z-10">
+                          <div className="w-14 h-14 bg-[#eff2ff] text-[#5b59e5] rounded-full flex items-center justify-center font-black text-xl group-hover:bg-[#5b59e5] group-hover:text-white transition-all">{s.name.charAt(0)}</div>
+                          
+                          {/* Average Score Badge */}
+                          <div className={`text-center px-4 py-2 rounded-2xl shadow-sm border ${studentAvg >= 75 ? 'bg-indigo-50 border-indigo-100 text-[#5b59e5]' : 'bg-rose-50 border-rose-100 text-rose-500'}`}>
+                             <p className="text-[7px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">AVERAGE</p>
+                             <p className="text-xl font-black leading-none">{studentAvg}</p>
+                          </div>
+                       </div>
+                       
+                       <div className="relative z-10">
+                         <h4 className="text-lg font-black text-[#1e293b] uppercase tracking-tight leading-none mb-1">{s.name}</h4>
+                         <div className="flex items-center gap-2">
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NIS {s.nis}</p>
+                           <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{s.class}</p>
+                         </div>
+                       </div>
+
+                       <div className="flex gap-2 relative z-10">
+                          <button onClick={() => { setViewingReportStudent(s); setReportSubTab('raport'); }} className="flex-1 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-[9px] font-black text-slate-800 uppercase tracking-widest hover:bg-[#5b59e5] hover:text-white hover:border-transparent transition-all shadow-sm">Buka Raport</button>
+                          <button onClick={() => deleteStudent(s.id)} className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all shadow-sm"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                       </div>
+
+                       {/* Subtle Background Accent */}
+                       <div className={`absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-[0.03] transition-transform group-hover:scale-150 ${studentAvg >= 75 ? 'bg-indigo-600' : 'bg-rose-600'}`}></div>
+                    </div>
+                  );
+               })}
                {studentsInClass.length === 0 && (
                  <div className="col-span-full py-24 text-center">
                    <div className="w-20 h-20 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center mx-auto mb-6">

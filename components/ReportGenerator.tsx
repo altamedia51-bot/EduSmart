@@ -36,6 +36,21 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student, setti
       }));
   }, [submissions, student.id]);
 
+  const avgA = sectionA.length > 0 ? Math.round(sectionA.reduce((a, b) => a + b.score, 0) / sectionA.length) : 0;
+  const avgB = sectionB.length > 0 ? Math.round(sectionB.reduce((a, b) => a + b.score, 0) / sectionB.length) : 0;
+  
+  const allScores = [...sectionA.map(i => i.score), ...sectionB.map(i => i.score)];
+  const avg = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : 0;
+
+  const getLetterGrade = (score: number) => {
+    if (score >= 90) return { label: 'A', color: 'text-emerald-600', desc: 'Sangat Baik' };
+    if (score >= 80) return { label: 'B', color: 'text-blue-600', desc: 'Baik' };
+    if (score >= 75) return { label: 'C', color: 'text-amber-600', desc: 'Cukup' };
+    return { label: 'D', color: 'text-rose-600', desc: 'Perlu Bimbingan' };
+  };
+
+  const grade = getLetterGrade(avg);
+
   const handleGenerateAIComment = async () => {
     setLoading(true);
     try {
@@ -52,21 +67,17 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student, setti
     }
   };
 
-  const allScores = [...sectionA.map(i => i.score), ...sectionB.map(i => i.score)];
-  const avg = allScores.length > 0 ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : 0;
-
   const handlePrint = () => {
     window.print();
   };
 
   return (
     <div className="max-w-5xl mx-auto bg-white p-12 print:p-0 shadow-2xl rounded-[1rem] print:shadow-none print:rounded-none font-sans text-slate-900">
-      {/* Header Section - Exactly like Image */}
+      {/* Header Section */}
       <div className="text-center mb-10">
         <h1 className="text-4xl font-black text-[#1e293b] tracking-[0.2em] mb-2 uppercase">{settings.schoolName}</h1>
         <p className="text-[#64748b] font-bold text-[10px] tracking-[0.3em] uppercase mb-8">Sistem Evaluasi Digital Terintegrasi</p>
         
-        {/* Thick Double Line */}
         <div className="border-t-[1px] border-slate-800 mb-[2px]"></div>
         <div className="border-t-[3px] border-slate-800"></div>
       </div>
@@ -75,30 +86,39 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student, setti
       <div className="flex justify-between items-center mb-14 px-2">
         <div className="space-y-3 text-slate-500 font-bold text-sm">
           <div className="grid grid-cols-[140px_20px_1fr] items-center">
-            <span className="uppercase tracking-wider">NAMA SISWA</span>
+            <span className="uppercase tracking-wider text-[11px]">NAMA SISWA</span>
             <span>:</span>
-            <span className="text-slate-900 font-black uppercase">{student.name}</span>
+            <span className="text-slate-900 font-black uppercase text-lg">{student.name}</span>
           </div>
           <div className="grid grid-cols-[140px_20px_1fr] items-center">
-            <span className="uppercase tracking-wider">NIS</span>
+            <span className="uppercase tracking-wider text-[11px]">NIS / KELAS</span>
             <span>:</span>
-            <span className="text-slate-900 font-black">{student.nis}</span>
+            <span className="text-slate-900 font-black uppercase">{student.nis} / {student.class}</span>
           </div>
           <div className="grid grid-cols-[140px_20px_1fr] items-center">
-            <span className="uppercase tracking-wider">PERIODE</span>
+            <span className="uppercase tracking-wider text-[11px]">PERIODE</span>
             <span>:</span>
             <span className="text-slate-900 font-black">{settings.period}</span>
           </div>
         </div>
 
-        {/* Average Score Box - Like Image */}
-        <div className="bg-[#f8fafc] border border-slate-100 rounded-[2.5rem] p-6 w-44 text-center shadow-sm">
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">RERATA AKHIR</p>
-           <span className={`text-7xl font-black leading-none ${avg >= 75 ? 'text-slate-800' : 'text-red-500'}`}>{avg}</span>
+        <div className="flex gap-4">
+          {/* Grade Letter Box */}
+          <div className="bg-[#f8fafc] border border-slate-100 rounded-[2rem] p-5 w-32 text-center shadow-sm flex flex-col justify-center">
+             <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">PREDIKAT</p>
+             <span className={`text-5xl font-black leading-none ${grade.color}`}>{grade.label}</span>
+             <p className={`text-[7px] font-black uppercase mt-1 ${grade.color}`}>{grade.desc}</p>
+          </div>
+          
+          {/* Average Score Box */}
+          <div className="bg-[#111827] text-white rounded-[2rem] p-6 w-44 text-center shadow-xl shadow-slate-200">
+             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">RERATA AKHIR</p>
+             <span className="text-7xl font-black leading-none">{avg}</span>
+          </div>
         </div>
       </div>
 
-      {/* Competency Table - Exactly like Image */}
+      {/* Competency Table */}
       <div className="overflow-hidden border border-slate-200 rounded-xl mb-12">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -112,7 +132,10 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student, setti
           <tbody className="text-[12px] font-bold text-slate-700">
             {/* Section A */}
             <tr className="bg-slate-50">
-               <td colSpan={4} className="px-8 py-4 font-black text-[10px] text-slate-400 uppercase tracking-widest">A. UJIAN HARIAN DIGITAL</td>
+               <td colSpan={4} className="px-8 py-4 font-black text-[10px] text-slate-400 uppercase tracking-widest flex justify-between">
+                 <span>A. UJIAN HARIAN DIGITAL</span>
+                 <span>SUB-RERATA: {avgA}</span>
+               </td>
             </tr>
             {sectionA.length > 0 ? sectionA.map((item, idx) => (
               <tr key={`a-${idx}`} className="border-t border-slate-100">
@@ -133,7 +156,10 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student, setti
 
             {/* Section B */}
             <tr className="bg-slate-50 border-t border-slate-200">
-               <td colSpan={4} className="px-8 py-4 font-black text-[10px] text-slate-400 uppercase tracking-widest">B. TUGAS MANDIRI TERSTRUKTUR</td>
+               <td colSpan={4} className="px-8 py-4 font-black text-[10px] text-slate-400 uppercase tracking-widest flex justify-between">
+                 <span>B. TUGAS MANDIRI TERSTRUKTUR</span>
+                 <span>SUB-RERATA: {avgB}</span>
+               </td>
             </tr>
             {sectionB.length > 0 ? sectionB.map((item, idx) => (
               <tr key={`b-${idx}`} className="border-t border-slate-100">
@@ -167,7 +193,7 @@ export const ReportGenerator: React.FC<ReportGeneratorProps> = ({ student, setti
              {loading ? 'Sistem AI Berpikir...' : '✨ Generate Narasi AI'}
            </button>
         </div>
-        <div className="border-t-2 border-slate-900 pt-6 min-h-[80px]">
+        <div className="border-t-2 border-slate-900 pt-6 min-h-[100px]">
           {comment ? (
             <p className="text-slate-700 text-sm leading-relaxed font-medium italic">
               "{comment}"

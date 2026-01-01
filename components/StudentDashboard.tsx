@@ -28,6 +28,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
   const studentResults = state.results.filter(r => r.studentId === currentStudent.id);
   const activeExams = state.exams.filter(e => e.active && (e.targetClasses?.includes(currentStudent.class) || !e.targetClasses?.length));
   const studentSubmissions = state.submissions.filter(s => s.studentId === currentStudent.id);
+  const gradedSubmissions = studentSubmissions.filter(s => s.status === 'GRADED');
 
   const handleStartExam = (exam: Exam) => {
     document.documentElement.requestFullscreen().catch((err) => {
@@ -74,6 +75,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
     setDescription('');
     setSelectedFile(null);
   };
+
+  // Synchronized Average Calculation (Exams + Graded Assignments)
+  const calculateTotalAvg = () => {
+    const allScores = [...studentResults.map(r => r.score), ...gradedSubmissions.map(s => s.score || 0)];
+    if (allScores.length === 0) return 0;
+    return Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length);
+  };
+
+  const totalAvg = calculateTotalAvg();
 
   if (activeExam) {
     return <ExamModule exam={activeExam} studentId={currentStudent.id} onFinish={handleFinishExam} onCancel={() => setActiveExam(null)} />;
@@ -275,17 +285,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
               <p className="text-slate-400 font-bold text-xs uppercase tracking-widest mt-1">PROGRES BELAJAR INDIVIDUAL ANDA</p>
             </div>
             <div className="bg-[#5b59e5] text-white p-6 rounded-[2rem] text-center shadow-lg shadow-indigo-100">
-               <p className="text-[9px] font-black uppercase tracking-widest mb-1 opacity-80">RATA-RATA</p>
+               <p className="text-[9px] font-black uppercase tracking-widest mb-1 opacity-80">RATA-RATA KOMULATIF</p>
                <p className="text-4xl font-black leading-none">
-                 {studentResults.length > 0 
-                   ? (studentResults.reduce((a, b) => a + b.score, 0) / studentResults.length).toFixed(0) 
-                   : '0'}
+                 {totalAvg}
                </p>
             </div>
           </div>
           <div className="h-[450px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={studentResults.map((r, i) => ({ name: `Quiz ${i+1}`, score: r.score }))}>
+              <BarChart data={[...studentResults.map((r, i) => ({ name: `Quiz ${i+1}`, score: r.score })), ...gradedSubmissions.map((s, i) => ({ name: `Tugas ${i+1}`, score: s.score || 0 }))]}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 'bold'}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 10, fontWeight: 'bold'}} />
@@ -294,8 +302,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ state, onUpd
                   contentStyle={{ borderRadius: '1.5rem', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)', fontWeight: 'black', textTransform: 'uppercase', fontSize: '10px' }}
                 />
                 <Bar dataKey="score" radius={[15, 15, 15, 15]} barSize={50}>
-                  {studentResults.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.score >= 75 ? '#5b59e5' : '#f43f5e'} />
+                  {[...studentResults, ...gradedSubmissions].map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={(entry.score || 0) >= 75 ? '#5b59e5' : '#f43f5e'} />
                   ))}
                 </Bar>
               </BarChart>

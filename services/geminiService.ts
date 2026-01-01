@@ -1,18 +1,11 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const getApiKey = () => {
-  return process.env.API_KEY || "";
-};
-
 // Use 'gemini-3-flash-preview' for basic text generation tasks like report comments.
 export const generateReportComment = async (studentName: string, grades: Record<string, number>): Promise<string> => {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    return "Error: API Key tidak ditemukan. Silakan konfigurasi di Pengaturan Guru.";
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  /* Create a new GoogleGenAI instance right before making an API call to ensure it uses the most up-to-date API key. */
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  
   const gradesContext = Object.entries(grades)
     .map(([subject, score]) => `${subject}: ${score}`)
     .join(', ');
@@ -39,12 +32,8 @@ export const generateReportComment = async (studentName: string, grades: Record<
 
 // Use 'gemini-3-pro-preview' for complex text reasoning tasks like generating quiz questions from material.
 export const generateQuestions = async (materialText: string, subject: string, count: number = 5, imageData?: { data: string, mimeType: string }): Promise<any[]> => {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error("API Key tidak ditemukan. Silakan hubungkan API Key di menu Pengaturan.");
-  }
-
-  const ai = new GoogleGenAI({ apiKey });
+  /* Create a new GoogleGenAI instance right before making an API call to ensure it uses the most up-to-date API key. */
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   let parts: any[] = [];
   
