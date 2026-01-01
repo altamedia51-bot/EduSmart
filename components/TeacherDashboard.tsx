@@ -9,7 +9,7 @@ interface TeacherDashboardProps {
   onUpdate: (newState: Partial<AppState>) => void;
 }
 
-// Fixed global declaration of aistudio to use the correct AIStudio type name and optional modifier.
+// Deklarasi global aistudio
 declare global {
   interface AIStudio {
     hasSelectedApiKey: () => Promise<boolean>;
@@ -17,7 +17,6 @@ declare global {
   }
 
   interface Window {
-    /* Use optional modifier to match potential existing global definitions. */
     aistudio?: AIStudio;
   }
 }
@@ -72,9 +71,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
   const handleOpenKeyDialog = async () => {
     if (window.aistudio) {
       await window.aistudio.openSelectKey();
-      setHasApiKey(true); // Assume success per guidelines
-    } else {
-      alert("Fitur pemilihan kunci hanya tersedia di lingkungan AI Studio.");
+      setHasApiKey(true); 
     }
   };
 
@@ -185,7 +182,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
       setAiImage(null);
       setAiImagePreview(null);
     } catch (error) {
-      alert(`Gagal membuat soal: ${error instanceof Error ? error.message : 'Unknown Error'}. Pastikan API Key sudah terpasang.`);
+      alert(`Gagal membuat soal: ${error instanceof Error ? error.message : 'Unknown Error'}. Pastikan API Key terpasang.`);
     } finally {
       setIsGenerating(false);
     }
@@ -539,9 +536,9 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                        <div className="flex justify-between items-start relative z-10">
                           <div className="w-14 h-14 bg-[#eff2ff] text-[#5b59e5] rounded-full flex items-center justify-center font-black text-xl group-hover:bg-[#5b59e5] group-hover:text-white transition-all">{s.name.charAt(0)}</div>
                           
-                          {/* Average Score Badge */}
+                          {/* Badge Rerata Nilai */}
                           <div className={`text-center px-4 py-2 rounded-2xl shadow-sm border ${studentAvg >= 75 ? 'bg-indigo-50 border-indigo-100 text-[#5b59e5]' : 'bg-rose-50 border-rose-100 text-rose-500'}`}>
-                             <p className="text-[7px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">AVERAGE</p>
+                             <p className="text-[7px] font-black uppercase tracking-widest opacity-60 leading-none mb-1">RERATA</p>
                              <p className="text-xl font-black leading-none">{studentAvg}</p>
                           </div>
                        </div>
@@ -560,7 +557,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                           <button onClick={() => deleteStudent(s.id)} className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all shadow-sm"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                        </div>
 
-                       {/* Subtle Background Accent */}
+                       {/* Ornamen Latar Belakang Halus */}
                        <div className={`absolute -right-4 -bottom-4 w-24 h-24 rounded-full opacity-[0.03] transition-transform group-hover:scale-150 ${studentAvg >= 75 ? 'bg-indigo-600' : 'bg-rose-600'}`}></div>
                     </div>
                   );
@@ -586,7 +583,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                     </div>
                     <div>
                       <h3 className="text-xl font-black text-[#1e293b] uppercase tracking-tight">Konektivitas & Sinkronisasi</h3>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cegah data hilang saat keluar dari Incognito</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cegah data hilang saat keluar dari browser</p>
                     </div>
                   </div>
                   
@@ -594,17 +591,22 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                     <div className="bg-white p-8 rounded-3xl border border-indigo-100 shadow-sm flex flex-col justify-between">
                       <div>
                         <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">API Smart Engine</h4>
-                        <p className="text-xs text-slate-500 font-medium mb-6">Status: {hasApiKey ? <span className="text-green-600 font-black">AKTIF</span> : <span className="text-red-500 font-black">MATI (Generate AI Tidak Bisa)</span>}</p>
+                        <p className="text-xs text-slate-500 font-medium mb-6">Status: {hasApiKey ? <span className="text-green-600 font-black">TERHUBUNG</span> : <span className="text-red-500 font-black">BELUM TERHUBUNG</span>}</p>
                       </div>
-                      <button onClick={handleOpenKeyDialog} className="w-full bg-[#5b59e5] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center justify-center gap-2">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
-                        AKTIFKAN AI ENGINE
-                      </button>
+                      {window.aistudio && (
+                        <button onClick={handleOpenKeyDialog} className="w-full bg-[#5b59e5] text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 active:scale-95 flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                          PILIH KUNCI API
+                        </button>
+                      )}
+                      {!window.aistudio && !hasApiKey && (
+                        <p className="text-[9px] font-bold text-rose-500 uppercase leading-relaxed italic">Catatan: Harap konfigurasi API_KEY di environment variable server Anda untuk menggunakan fitur AI.</p>
+                      )}
                     </div>
                     
                     <div className="bg-white p-8 rounded-3xl border border-indigo-100 shadow-sm flex flex-col justify-between">
                       <div>
-                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Backup Lokal</h4>
+                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Pencadangan Data</h4>
                         <p className="text-xs text-slate-500 font-medium mb-6">Cadangkan seluruh data sekolah Anda ke dalam file digital.</p>
                       </div>
                       <div className="flex gap-2">
@@ -612,13 +614,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                         <button onClick={() => dbImportRef.current?.click()} className="flex-1 bg-slate-800 text-white py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all active:scale-95">IMPOR</button>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="mt-8 p-6 bg-blue-50 rounded-2xl border border-blue-100 flex items-start gap-4">
-                     <svg className="w-6 h-6 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                     <p className="text-[10px] font-bold text-blue-700 uppercase tracking-tight leading-relaxed">
-                       Saran Deployment: Jika Anda menggunakan Vercel, pastikan API_KEY telah didaftarkan pada Environment Variables dashboard Vercel Anda. Gunakan tombol "Aktifkan AI Engine" di atas jika kunci tidak terdeteksi otomatis.
-                     </p>
                   </div>
                </section>
 
@@ -632,20 +627,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                     <div className="space-y-4">
                       <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-2">Kota Penerbitan</label>
                       <input type="text" value={state.reportSettings.city} onChange={(e) => updateReportSettings('city', e.target.value)} className="w-full bg-[#f8fafc] border border-slate-100 rounded-2xl px-6 py-4 text-xl font-black text-[#334155] outline-none focus:ring-4 focus:ring-indigo-500/5 shadow-inner" />
-                    </div>
-                  </div>
-               </section>
-
-               <section className="bg-white border border-slate-100 p-10 rounded-[2.5rem] shadow-sm">
-                  <h3 className="text-xl font-black text-[#1e293b] uppercase tracking-tight mb-8">Informasi Raport</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                      <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-2">Periode Semester</label>
-                      <input type="text" value={state.reportSettings.period} onChange={(e) => updateReportSettings('period', e.target.value)} className="w-full bg-[#f8fafc] border border-slate-100 rounded-2xl px-6 py-4 text-xl font-black text-[#334155] outline-none focus:ring-4 focus:ring-indigo-500/5 shadow-inner" placeholder="Mis: Semester Ganjil 2024" />
-                    </div>
-                    <div className="space-y-4">
-                      <label className="text-[10px] font-black text-[#94a3b8] uppercase tracking-[0.2em] ml-2">Jabatan Penandatangan</label>
-                      <input type="text" value={state.reportSettings.signatoryTitle} onChange={(e) => updateReportSettings('signatoryTitle', e.target.value)} className="w-full bg-[#f8fafc] border border-slate-100 rounded-2xl px-6 py-4 text-xl font-black text-[#334155] outline-none focus:ring-4 focus:ring-indigo-500/5 shadow-inner" placeholder="Mis: Wali Kelas" />
                     </div>
                   </div>
                </section>
@@ -779,7 +760,7 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
                                 updatedQuestions[idx] = { ...updatedQuestions[idx], options: updatedOptions };
                                 setNewExam({...newExam, questions: updatedQuestions});
                               }} 
-                              className={`flex-1 bg-white border border-slate-200 px-3 py-2 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-5 shadow-sm ${q.correctAnswer === oIdx ? 'text-indigo-600 ring-1 ring-indigo-200' : 'text-slate-700'}`} 
+                              className={`flex-1 bg-white border border-slate-200 px-3 py-2 rounded-lg text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-50 shadow-sm ${q.correctAnswer === oIdx ? 'text-indigo-600 ring-1 ring-indigo-200' : 'text-slate-700'}`} 
                               placeholder={`Opsi ${oIdx + 1}`} 
                             />
                           </div>
@@ -796,56 +777,6 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ state, onUpd
               <button onClick={saveExam} className="bg-[#1e293b] text-white px-12 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#5b59e5] transition-all shadow-xl active:scale-95">Simpan Ujian</button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Preview Exam Modal */}
-      {previewExam && (
-        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in-95 duration-300">
-            <div className="flex justify-between items-center mb-8 border-b pb-4">
-              <div>
-                <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight mb-1">{previewExam.title}</h2>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{previewExam.subject} • {previewExam.questions.length} SOAL • {previewExam.targetClasses?.join(', ') || 'Semua Kelas'}</p>
-              </div>
-              <button onClick={() => setPreviewExam(null)} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center hover:bg-slate-100 transition-colors text-slate-400"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg></button>
-            </div>
-            <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-              {previewExam.questions.map((q, idx) => (
-                <div key={idx} className="bg-slate-50 p-6 rounded-3xl">
-                  <p className="font-bold text-slate-800 mb-4">{idx + 1}. {q.text}</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {q.options.map((opt, oIdx) => (
-                      <div key={oIdx} className={`p-4 rounded-2xl text-xs font-bold border-2 transition-all ${q.correctAnswer === oIdx ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-white border-slate-100 text-slate-500'}`}>
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => setPreviewExam(null)} className="w-full mt-8 bg-slate-100 text-slate-600 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all">Tutup</button>
-          </div>
-        </div>
-      )}
-
-      {/* Grading Modal */}
-      {gradingSubmission && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-           <div className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-10 animate-in zoom-in-95 duration-300">
-              <h2 className="text-xl font-black mb-8 uppercase text-slate-800">Beri Nilai Tugas</h2>
-              <div className="space-y-8">
-                 <div className="bg-slate-50 p-6 rounded-2xl text-slate-700 font-bold uppercase">Mata Pelajaran: {gradingSubmission.subject}</div>
-                 <div>
-                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-2 block ml-2">Skor Nilai (0-100)</label>
-                    <input type="number" value={gradeValue} onChange={e => setGradeValue(parseInt(e.target.value) || 0)} className="w-full bg-slate-50 border-none px-6 py-4 rounded-2xl text-3xl font-black text-indigo-600 outline-none ring-1 ring-slate-100 focus:ring-indigo-500/20 shadow-inner" />
-                 </div>
-                 <div className="flex gap-4">
-                    <button onClick={() => setGradingSubmission(null)} className="flex-1 py-4 font-black uppercase text-xs text-slate-400 hover:text-slate-600 transition-all">Batal</button>
-                    <button onClick={handleGradeSubmission} className="flex-2 bg-[#5b59e5] text-white py-4 px-8 rounded-2xl font-black uppercase text-xs shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all active:scale-95">Simpan Nilai</button>
-                 </div>
-              </div>
-           </div>
         </div>
       )}
     </div>
